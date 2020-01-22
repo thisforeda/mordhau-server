@@ -1,14 +1,28 @@
-FROM shel1/steamcmd
+FROM debian:stretch-slim
 
 COPY entry /entry
 COPY sources.list /etc/apt/sources.list
 
-ENV STEAMAPPID   629800
-ENV STEAMAPPDIR  /home/steam/mordhau
+ENV STEAMAPPID  629800
+ENV STEAMAPPDIR /home/steam/mordhau
+ENV STEAMCMDDIR /home/steam/steamcmd
+ENV STEAMCMDRES https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
 
-RUN apt-get update && apt-get install -y --no-install-recommends --no-install-suggests \
+RUN chmod 755 /entry
+
+RUN useradd -m steam
+
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        xdg-user-dirs \
+        lib32stdc++6 \
+        lib32gcc1 \
+        wget \
+        ca-certificates \
         procps \
         libcurl4-gnutls-dev \
+        libcurl3-gnutls \
+        libcurl3 \
         libfontconfig1 \
         libpangocairo-1.0-0 \
         libnss3 \
@@ -21,23 +35,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends --no-install-su
         libxdamage1 \
         libxtst6 \
         libatk1.0-0 \
-        libxrandr2 \
-        && apt-get autoremove -y \
-        && apt-get clean autoclean \
-        && rm -rf /var/lib/{apt,dpkg,cache,log}/ \
-        && chmod 755 /entry \
-        && su steam -c \
-            "${STEAMCMDDIR}/steamcmd.sh \
-             +login anonymous \
-             +force_install_dir ${STEAMAPPDIR} \
-             +app_update ${STEAMAPPID} validate \
-             +quit"
+        libxrandr2
+
+RUN su steam -c \
+        "mkdir -p ${STEAMCMDDIR} \
+         && cd ${STEAMCMDDIR} \
+         && wget -qO- $STEAMCMDRES | tar zxf -"
+
+RUN su steam -c \
+        "${STEAMCMDDIR}/steamcmd.sh \
+         +login anonymous \
+         +force_install_dir ${STEAMAPPDIR} \
+         +app_update ${STEAMAPPID} validate \
+         +quit"
+
+RUN apt-get autoremove -y \
+        && apt-get clean autoclean
 
 USER steam
-WORKDIR /home/steam
-
-EXPOSE 7777
-EXPOSE 15000 
-EXPOSE 27015
+WORKDIR $STEAMAPPDIR
+EXPOSE 7777 15000 27015
 
 ENTRYPOINT /entry
+
