@@ -1,17 +1,12 @@
 FROM debian:stretch-slim
 
-COPY entry /entry
-COPY sources.list /etc/apt/sources.list
-
-ENV STEAMAPPID  629800
-ENV STEAMAPPDIR /home/steam/mordhau
+ENV STEAMAPPID  ${STEAMAPPID}
+ENV STEAMAPPDIR /home/steam
 ENV STEAMCMDDIR /home/steam/steamcmd
 ENV STEAMCMDRES https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
-
-RUN chmod 755 /entry
+ENV PATH "${STEAMAPPDIR}:${PATH}"
 
 RUN useradd -m steam
-
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends --no-install-suggests \
         xdg-user-dirs \
@@ -19,6 +14,7 @@ RUN apt-get update && apt-get upgrade -y \
         lib32gcc1 \
         wget \
         ca-certificates \
+        iputils-ping \
         procps \
         libcurl4-gnutls-dev \
         libcurl3-gnutls \
@@ -51,10 +47,6 @@ RUN su steam -c \
 
 RUN apt-get autoremove -y \
         && apt-get clean autoclean
-
-USER steam
+COPY entry ${STEAMAPPDIR}/entry
 WORKDIR $STEAMAPPDIR
-EXPOSE 7777 15000 27015
-
-ENTRYPOINT /entry
-
+USER steam

@@ -1,0 +1,15 @@
+#!/bin/sh
+trap "pkill -f Mordhau" INT KILL TERM
+
+SERVER_PORT=${SERVER_PORT:-7777}
+SERVER_QUERYPORT=${SERVER_QUERYPORT:-27010}
+SERVER_BEACONPORT=${SERVER_BEACONPORT:-15000}
+
+([ ! -f /config/Game.ini ] || [ ! -f /config/Engine.ini ]) && exit
+${STEAMAPPDIR}/MordhauServer.sh -log \
+                           -Port=$SERVER_PORT \
+                           -QueryPort=$SERVER_QUERYPORT \
+                           -BeaconPort=$SERVER_BEACONPORT \
+                           -GAMEINI=/config/Game.ini \
+                           -ENGINEINI=/config/Engine.ini &
+wait "$!"
